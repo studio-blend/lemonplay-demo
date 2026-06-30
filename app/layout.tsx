@@ -28,6 +28,10 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://lemonpay.tech",
   },
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
   robots: {
     index: true,
     follow: true,
