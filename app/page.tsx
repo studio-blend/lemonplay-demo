@@ -152,7 +152,9 @@ export default function Home() {
         <div className="orb-2 absolute top-1/3 -right-48 h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle,rgba(77,217,192,0.10)_0%,transparent_70%)] blur-3xl" />
         <div className="orb-3 absolute bottom-0 left-1/4 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(245,200,66,0.08)_0%,transparent_70%)] blur-2xl" />
         {/* subtle grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_60%,transparent_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_60%,transparent_100%)]">
+          <div className="grid-scan" />
+        </div>
         {/* floating particles */}
         <div className="float-particle fp-1" />
         <div className="float-particle fp-2" />
