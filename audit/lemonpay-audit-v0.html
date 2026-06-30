@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lemonpay — Master Audit & Redesign Plan</title>
+<style>
+:root {
+  --bg: #0d0e10;
+  --bg2: #141518;
+  --bg3: #1a1c21;
+  --bg4: #222429;
+  --border: #2a2d35;
+  --text: #e2e4ea;
+  --muted: #7a7f8e;
+  --dim: #4a4f5e;
+  --accent: #f5c842;
+  --accent2: #e6b82a;
+  --cyan: #4dd9c0;
+  --lime: #a3e635;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+  --mono: 'Courier New', monospace;
+  --serif: Georgia, serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+#sidebar {
+  width: 220px; min-width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+  position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100;
+  display: flex; flex-direction: column;
+}
+.sb-brand { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); }
+.sb-brand .logo { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .05em; }
+.sb-brand .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.sb-scores { padding: 12px 14px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sb-score { background: var(--bg3); border-radius: 6px; padding: 6px 8px; }
+.sb-score .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.sb-score .val { font-size: 18px; font-weight: 700; line-height: 1.1; }
+.sb-nav { padding: 8px 0; flex: 1; }
+.sb-section { padding: 4px 0; }
+.sb-section-label { padding: 8px 14px 2px; font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+.sb-link { display: flex; align-items: center; gap: 8px; padding: 7px 14px; cursor: pointer; border-left: 2px solid transparent; transition: all .15s; color: var(--muted); font-size: 12px; }
+.sb-link:hover { color: var(--text); background: var(--bg3); }
+.sb-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(245,200,66,.06); }
+.sb-link .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* MAIN */
+#main { margin-left: 220px; flex: 1; }
+.section { display: none; min-height: 100vh; }
+.section.active { display: block; }
+.section-header { padding: 32px 36px 24px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 50; }
+.section-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.section-header .tag { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.section-body { padding: 28px 36px; }
+
+/* CARDS & COMPONENTS */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.card-sm { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+.row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.col { flex: 1; min-width: 200px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+/* SEVERITY */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.badge-red { background: rgba(239,68,68,.15); color: var(--red); }
+.badge-amber { background: rgba(245,158,11,.15); color: var(--amber); }
+.badge-green { background: rgba(34,197,94,.12); color: var(--green); }
+.badge-cyan { background: rgba(77,217,192,.12); color: var(--cyan); }
+.badge-lime { background: rgba(163,230,53,.12); color: var(--lime); }
+.badge-blue { background: rgba(59,130,246,.12); color: var(--blue); }
+.badge-muted { background: var(--bg3); color: var(--muted); }
+
+/* FINDING CARDS */
+.finding { border-left: 3px solid; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 10px; background: var(--bg3); }
+.finding.crit { border-color: var(--red); }
+.finding.major { border-color: var(--amber); }
+.finding.minor { border-color: var(--muted); }
+.finding.good { border-color: var(--green); }
+.finding-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.finding-title { font-weight: 600; font-size: 13px; }
+.finding-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.finding-body code { font-family: var(--mono); font-size: 11px; color: var(--cyan); background: rgba(77,217,192,.08); padding: 1px 5px; border-radius: 4px; }
+.finding-fix { margin-top: 8px; font-size: 11px; color: var(--text); background: rgba(245,200,66,.06); border: 1px solid rgba(245,200,66,.15); padding: 6px 10px; border-radius: 6px; }
+.finding-fix strong { color: var(--accent); }
+
+/* SCORES */
+.score-big { font-size: 36px; font-weight: 700; line-height: 1; }
+.score-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.score-bar-wrap { margin: 8px 0; }
+.score-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.score-bar { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+/* TABS */
+.tabs { display: flex; gap: 2px; padding: 0 0 0 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tab { padding: 8px 16px; cursor: pointer; font-size: 12px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: var(--bg3); color: var(--muted); font-weight: 600; text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+
+/* CODE BLOCK */
+pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--cyan); overflow-x: auto; margin: 12px 0; line-height: 1.7; }
+
+/* TREE */
+.tree-item { padding: 6px 0 6px 20px; border-left: 1px solid var(--border); margin-left: 8px; font-size: 12px; position: relative; }
+.tree-item::before { content: ''; position: absolute; left: -1px; top: 14px; width: 12px; height: 1px; background: var(--border); }
+.tree-root { padding: 6px 0; font-size: 12px; }
+.tree-url { color: var(--cyan); font-family: var(--mono); font-size: 11px; }
+.tree-desc { color: var(--muted); font-size: 11px; margin-left: 8px; }
+.tree-flag { font-size: 10px; margin-left: 6px; }
+
+/* PHASE CARD */
+.phase-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+.phase-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+.phase-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+.phase-title { font-weight: 700; font-size: 14px; }
+.phase-sub { font-size: 11px; color: var(--muted); }
+.phase-body { padding: 16px 20px; }
+.action { background: var(--bg3); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.action-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.action-id { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.action-title { font-weight: 600; font-size: 13px; flex: 1; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+.pill-effort { background: rgba(59,130,246,.12); color: var(--blue); }
+.pill-impact { background: rgba(163,230,53,.12); color: var(--lime); }
+.action-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.action-before { margin-top: 8px; font-size: 11px; }
+.action-before .before { color: var(--red); }
+.action-before .after { color: var(--green); }
+
+/* REDESIGN TOOL CARDS */
+.tool-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.tool-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.tool-role { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.tool-tasks { list-style: none; }
+.tool-tasks li { font-size: 12px; color: var(--muted); padding: 4px 0; padding-left: 16px; position: relative; }
+.tool-tasks li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
+/* PROGRESSION */
+.prog-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.prog-label { font-size: 12px; color: var(--muted); min-width: 80px; }
+.prog-bars { flex: 1; display: flex; gap: 4px; align-items: center; }
+.prog-phase { flex: 1; }
+.prog-phase-label { font-size: 9px; color: var(--dim); margin-bottom: 2px; text-align: center; }
+.prog-bar-outer { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+.prog-bar-inner { height: 100%; border-radius: 4px; }
+
+/* STAT BOXES */
+.stat-box { background: var(--bg3); border-radius: 8px; padding: 14px 16px; text-align: center; }
+.stat-val { font-size: 24px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .06em; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+p { color: var(--muted); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+.accent-text { color: var(--accent); }
+.cyan-text { color: var(--cyan); }
+.lime-text { color: var(--lime); }
+.red-text { color: var(--red); }
+.muted { color: var(--muted); }
+.serif { font-family: var(--serif); font-style: italic; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-brand">
+    <div class="logo">🍋 LEMONPAY AUDIT</div>
+    <div class="sub">Klyph × Investor-Grade Report</div>
+  </div>
+  <div class="sb-scores">
+    <div class="sb-score"><div class="label">UI/UX</div><div class="val" style="color:#f59e0b">3.9</div></div>
+    <div class="sb-score"><div class="label">SEO</div><div class="val" style="color:#ef4444">2.1</div></div>
+    <div class="sb-score"><div class="label">GEO</div><div class="val" style="color:#ef4444">2.6</div></div>
+    <div class="sb-score"><div class="label">Overall</div><div class="val" style="color:#f59e0b">3.0</div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">
+      <div class="sb-section-label">Audit</div>
+      <div class="sb-link active" onclick="showSection('intel')"><div class="dot" style="background:#4dd9c0"></div>Site Intelligence</div>
+      <div class="sb-link" onclick="showSection('tree')"><div class="dot" style="background:#a855f7"></div>Site Tree</div>
+      <div class="sb-link" onclick="showSection('pages')"><div class="dot" style="background:#f59e0b"></div>Page Reviews</div>
+      <div class="sb-link" onclick="showSection('patterns')"><div class="dot" style="background:#ef4444"></div>Global Patterns</div>
+      <div class="sb-link" onclick="showSection('ux')"><div class="dot" style="background:#4dd9c0"></div>UI/UX Audit</div>
+      <div class="sb-link" onclick="showSection('seo')"><div class="dot" style="background:#3b82f6"></div>SEO Audit</div>
+      <div class="sb-link" onclick="showSection('geo')"><div class="dot" style="background:#a3e635"></div>GEO Audit</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-section-label">Redesign</div>
+      <div class="sb-link" onclick="showSection('roadmap')"><div class="dot" style="background:#f5c842"></div>Improvement Roadmap</div>
+      <div class="sb-link" onclick="showSection('redesign')"><div class="dot" style="background:#f5c842"></div>Redesign Plan</div>
+      <div class="sb-link" onclick="showSection('scores')"><div class="dot" style="background:#22c55e"></div>Score Dashboard</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- ===== 1. SITE INTELLIGENCE ===== -->
+<div id="intel" class="section active">
+  <div class="section-header">
+    <h1>Site Intelligence</h1>
+    <div class="tag"><span class="badge badge-cyan">Phase 1–2</span> Inferred from full crawl · 9 pages audited</div>
+  </div>
+  <div class="section-body">
+    <div class="grid2" style="margin-bottom:20px">
+      <div class="card">
+        <h3 style="color:var(--cyan);margin-bottom:14px">Company Profile</h3>
+        <table>
+          <tr><td style="color:var(--muted);width:120px">Legal Name</td><td>Lemonpay Software Private Limited</td></tr>
+          <tr><td style="color:var(--muted)">Product</td><td>Fintech payment aggregator platform (UPI, QR, API)</td></tr>
+          <tr><td style="color:var(--muted)">Industry</td><td>Indian Fintech / Payment Gateway / B2B SaaS</td></tr>
+          <tr><td style="color:var(--muted)">Stage</td><td><span class="badge badge-amber">Early Growth</span> · 2+ yrs · 500+ merchants</td></tr>
+          <tr><td style="color:var(--muted)">Reg. Office</td><td>Pondicherry – 605 013</td></tr>
+          <tr><td style="color:var(--muted)">Corp. Office</td><td>Tidel Park, Villupuram, Tamil Nadu</td></tr>
+          <tr><td style="color:var(--muted)">Founded</td><td>~2022–23 (inferred from "2+ years operation")</td></tr>
+          <tr><td style="color:var(--muted)">Domain</td><td>lemonpay.tech · cube.lemonpay.in (dashboard)</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--cyan);margin-bottom:14px">Tech Stack</h3>
+        <div class="finding minor" style="margin-bottom:8px">
+          <div class="finding-head"><span class="badge badge-amber">Detected</span><span class="finding-title">Next.js (App Router)</span></div>
+          <div class="finding-body">Meta description literally reads <code>"Next.js app with scroll-based sections"</code> — this is a developer placeholder never replaced.</div>
+        </div>
+        <table>
+          <tr><td style="color:var(--muted)">Framework</td><td>Next.js (App Router)</td></tr>
+          <tr><td style="color:var(--muted)">CMS / Builder</td><td>Builder.io (TEMP CDN assets still in place)</td></tr>
+          <tr><td style="color:var(--muted)">Hosting</td><td>Vercel (inferred from Next.js + URL pattern)</td></tr>
+          <tr><td style="color:var(--muted)">Dashboard</td><td>cube.lemonpay.in — separate product app</td></tr>
+          <tr><td style="color:var(--muted)">Media</td><td>Self-hosted .mp4, .gif, .png on lemonpay.tech</td></tr>
+          <tr><td style="color:var(--muted)">Analytics</td><td>Not detectable from crawl</td></tr>
+          <tr><td style="color:var(--muted)">Cookies/GDPR</td><td>No consent banner detected</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="grid3" style="margin-bottom:20px">
+      <div class="card-sm">
+        <h3 style="margin-bottom:10px">Audiences</h3>
+        <div style="margin-bottom:6px"><span class="badge badge-blue">Primary</span> <span style="font-size:12px;margin-left:4px">SME & startup merchants</span></div>
+        <div style="margin-bottom:6px"><span class="badge badge-muted">Secondary</span> <span style="font-size:12px;margin-left:4px">Enterprise businesses</span></div>
+        <div style="margin-bottom:6px"><span class="badge badge-muted">Tertiary</span> <span style="font-size:12px;margin-left:4px">Associate/reseller partners</span></div>
+        <div style="margin-bottom:6px"><span class="badge badge-muted">Latent</span> <span style="font-size:12px;margin-left:4px">Job seekers (careers page)</span></div>
+      </div>
+      <div class="card-sm">
+        <h3 style="margin-bottom:10px">Brand Positioning</h3>
+        <p style="font-size:12px">Attempting <em>trusted infrastructure + accessibility</em> positioning ("payment solutions to underbanked areas") but execution is inconsistent. Visual design signals <em>startup MVP</em> rather than <em>trusted financial infrastructure</em>. The brand aspires to compete with Razorpay/Cashfree but the site does not yet project that credibility.</p>
+      </div>
+      <div class="card-sm">
+        <h3 style="margin-bottom:10px">Primary Conversion Goal</h3>
+        <p style="font-size:12px">Merchant onboarding via contact form → demo/signup into <strong>Cube dashboard</strong>. Secondary: Associate/reseller partner sign-up. Both conversion paths are poorly implemented — the Solutions page is empty and the Associate Network page is empty.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--amber);margin-bottom:12px">🔍 Key Inferences</h3>
+      <div class="grid2">
+        <div>
+          <p style="font-size:12px;margin-bottom:6px"><strong style="color:var(--text)">Services offered:</strong> UPI collections & payouts, QR payment solutions, API-based payment gateway, AI-powered KYC verification, e-mandate/recurring payments, subscription services, payment optimiser (Optimizer), associate/reseller network.</p>
+          <p style="font-size:12px"><strong style="color:var(--text)">Product "Cube":</strong> The platform's dashboard/portal at cube.lemonpay.in. No page on the marketing site explains what Cube is, despite it being the primary nav item "Solution → Cube." This is a critical disconnect.</p>
+        </div>
+        <div>
+          <p style="font-size:12px;margin-bottom:6px"><strong style="color:var(--text)">Founders:</strong> Three Yadav brothers — Senthil Kumar (CEO/Founder), Sathish Kumar (CBO/Co-Founder), Sampath Kumar (CFO/CHRO/Co-Founder). All team photos have empty src attributes (broken).</p>
+          <p style="font-size:12px"><strong style="color:var(--text)">Claims to validate:</strong> "500+ merchants onboarded," "5 Lakhs+ transactions per day," "96% satisfied merchants," "Eliminate 75% of friction." These are unverified and lack any citation, case study, or methodology note.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 2. SITE TREE ===== -->
+<div id="tree" class="section">
+  <div class="section-header">
+    <h1>Site Tree</h1>
+    <div class="tag"><span class="badge badge-red">2 dead nav pages</span>&nbsp;<span class="badge badge-amber">3 broken legal pages</span>&nbsp;<span class="badge badge-muted">No sitemap found</span></div>
+  </div>
+  <div class="section-body">
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <h3 style="margin-bottom:14px">Architecture Map</h3>
+          <div class="tree-root">
+            <span class="tree-url">/ (Homepage)</span>
+            <span class="tree-desc">Marketing hub · Depth 0</span>
+            <span class="badge badge-green" style="font-size:9px">Live</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/about</span>
+            <span class="tree-desc">Company + team · Depth 1</span>
+            <span class="badge badge-amber" style="font-size:9px">Partial</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/solutions/cube</span>
+            <span class="tree-desc">Product page · Depth 2</span>
+            <span class="badge badge-red" style="font-size:9px">EMPTY</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/contact</span>
+            <span class="tree-desc">Contact + offices · Depth 1</span>
+            <span class="badge badge-green" style="font-size:9px">Live</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/ass-network</span>
+            <span class="tree-desc">Associate partners · Depth 1</span>
+            <span class="badge badge-red" style="font-size:9px">EMPTY</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/careers</span>
+            <span class="tree-desc">Job seekers · Depth 1</span>
+            <span class="badge badge-amber" style="font-size:9px">Minimal</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/legal-policies/terms</span>
+            <span class="tree-desc">T&C · Depth 2</span>
+            <span class="badge badge-green" style="font-size:9px">Live</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/legal-policies/privacy</span>
+            <span class="tree-desc">Privacy Policy · Depth 2</span>
+            <span class="badge badge-red" style="font-size:9px">LOADING</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/legal-policies/press</span>
+            <span class="tree-desc">Press/Media · Depth 2</span>
+            <span class="badge badge-red" style="font-size:9px">LOADING</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/legal-policies/grievance</span>
+            <span class="tree-desc">Grievance · Depth 2</span>
+            <span class="badge badge-red" style="font-size:9px">LOADING</span>
+          </div>
+          <div class="tree-item">
+            <span class="tree-url">/legal-policies/dpa</span>
+            <span class="tree-desc">Data Processing Agreement · Depth 2</span>
+            <span class="badge badge-muted" style="font-size:9px">Not fetched</span>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card" style="margin-bottom:14px">
+          <h3 style="margin-bottom:12px;color:var(--red)">Navigation Gaps & Issues</h3>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">/solutions/cube is completely empty</span></div>
+            <div class="finding-body">The primary "Solution" nav item leads to a page that renders nothing except the nav bar. A visitor clicking the main product link sees a blank page. This is the single highest-priority fix on the site.</div>
+          </div>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">/ass-network is completely empty</span></div>
+            <div class="finding-body">The associate network programme — a key business channel — has no content. The page renders only the navigation.</div>
+          </div>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Privacy, Press, Grievance pages stuck on "Loading..."</span></div>
+            <div class="finding-body">Three legal pages are JS-render-only and fail to display content. Privacy policy being inaccessible is a legal compliance risk. All three are indexed and linked from footer.</div>
+          </div>
+          <div class="finding major">
+            <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">URL slug "/ass-network" is inappropriate</span></div>
+            <div class="finding-body">This URL will be filtered by corporate firewalls, flagged by content scanners, and creates professionalism problems when sharing links. Should be <code>/partner-network</code> or <code>/associate-network</code>.</div>
+          </div>
+          <div class="finding major">
+            <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">No sitemap.xml found</span></div>
+            <div class="finding-body">sitemap.xml returns 404. Google cannot efficiently discover and index pages. Critical for a site with legal pages, careers, and product content.</div>
+          </div>
+          <div class="finding minor">
+            <div class="finding-head"><span class="badge badge-muted">MINOR</span><span class="finding-title">Careers page has zero job listings</span></div>
+            <div class="finding-body">The page loads a video hero and a single CTA "Explore Opportunities" — but no opportunities exist and the CTA links nowhere functional.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3. PAGE REVIEWS ===== -->
+<div id="pages" class="section">
+  <div class="section-header">
+    <h1>Page-by-Page Reviews</h1>
+    <div class="tag">9 pages crawled · 5 scored · 4 empty/broken</div>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'pg','pg-home')">Homepage</div>
+      <div class="tab" onclick="switchTab(this,'pg','pg-about')">About</div>
+      <div class="tab" onclick="switchTab(this,'pg','pg-contact')">Contact</div>
+      <div class="tab" onclick="switchTab(this,'pg','pg-careers')">Careers</div>
+      <div class="tab" onclick="switchTab(this,'pg','pg-broken')">Empty/Broken Pages</div>
+    </div>
+
+    <div id="pg-home" class="tab-pane active">
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">4/10</div><div class="stat-label">Content Quality</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">3/10</div><div class="stat-label">Credibility</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">3/10</div><div class="stat-label">Conversion</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">5/10</div><div class="stat-label">Accuracy</div></div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">Hero section has no product identity</span></div>
+        <div class="finding-body">Above the fold: a looping GIF (<code>cubic.gif</code>), an overlay image (<code>bg1.png</code>), and the text "FINTECH for the future." No visitor knows what Lemonpay does, who it's for, or what to do next. The tagline is meaningless without context.</div>
+        <div class="finding-fix"><strong>Fix:</strong> Replace with: "India's payment gateway for growing businesses — UPI, QR, and API payments in one platform. Get started free." + CTA "Request a demo".</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">Partner logos sourced from Builder.io TEMP CDN</span></div>
+        <div class="finding-body">Five of six partner logo images use URLs containing <code>/TEMP/</code> — these are temporary Builder.io assets that can expire or be purged at any time, breaking the social proof section visually.</div>
+        <div class="finding-fix"><strong>Fix:</strong> Download, rename, and self-host all partner logos immediately. Confirm which partners are real.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">"Know More" CTA goes nowhere specific</span></div>
+        <div class="finding-body">The hero CTA "Know More" is present in the HTML but its destination is not a product page — the Solutions page is empty. This converts zero visitors.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">Stat claims are unverified and ambiguous</span></div>
+        <div class="finding-body">"5 Lakhs + per day" — lakhs of what? Transactions? Rupees? "96% Satisfied Merchants" — how was this measured? "500+ Merchants onboarded" — this number may be accurate but needs a citation or methodology note.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">Section heading "Why Lemonpay Logo?" is confusing</span></div>
+        <div class="finding-body">The H1 text reads "Why<em>Lemonpay Logo</em>?" — the logo emoji appears inside the heading text rendering incorrectly in markdown/HTML. Intended to say "Why Lemonpay?" but displays bizarrely.</div>
+      </div>
+      <div class="finding good">
+        <div class="finding-head"><span class="badge badge-green">🟢 GOOD</span><span class="finding-title">Feature benefits are clear and relevant</span></div>
+        <div class="finding-body">The six benefit cards (Low Fees, Fast Processing, Accessibility, Security, Easy Tracking, Compliance) are correctly identified pain points for the target audience and written in plain language.</div>
+      </div>
+    </div>
+
+    <div id="pg-about" class="tab-pane">
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">5/10</div><div class="stat-label">Content Quality</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">2/10</div><div class="stat-label">Credibility</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">4/10</div><div class="stat-label">Conversion</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">5/10</div><div class="stat-label">Accuracy</div></div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">All team photos are broken (empty src attributes)</span></div>
+        <div class="finding-body">Three leadership profiles — Senthil, Sathish, and Sampath Kumar Yadav — all have <code>![Name]()</code> image references with empty src. No photo renders. On an About page, this destroys credibility instantly — it signals either abandonment or that the team may not be real.</div>
+        <div class="finding-fix"><strong>Fix:</strong> Upload actual professional headshots for all three founders immediately. This is the single most credibility-damaging item on the site.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">Sathish Kumar Yadav is listed twice</span></div>
+        <div class="finding-body">The About page carousel/slider duplicates the Sathish Kumar Yadav card, once with a LinkedIn link and once without. This appears to be a slider implementation bug but makes the leadership section look copied or fake.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">Page loads "Loading scroll animations..." text visibly</span></div>
+        <div class="finding-body">The raw loading state message appears in the crawled content for the leadership section — this is JavaScript-dependent content that may flash or fail to load for users on slow connections or with JS disabled.</div>
+      </div>
+      <div class="finding good">
+        <div class="finding-head"><span class="badge badge-green">🟢 GOOD</span><span class="finding-title">Mission, Vision, Core Values are well-structured</span></div>
+        <div class="finding-body">Trust, Innovation, Partnership values are clearly stated with appropriate descriptions. Good foundation — needs accompanying real photography and founder quotes.</div>
+      </div>
+    </div>
+
+    <div id="pg-contact" class="tab-pane">
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">6/10</div><div class="stat-label">Content Quality</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">5/10</div><div class="stat-label">Credibility</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">5/10</div><div class="stat-label">Conversion</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--amber)">6/10</div><div class="stat-label">Accuracy</div></div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">Contact email is "career@lemonpay.tech" on a general contact page</span></div>
+        <div class="finding-body">The prominently displayed email on the Contact page is the careers email, not a general business contact. Merchants trying to enquire will write to the careers inbox.</div>
+        <div class="finding-fix"><strong>Fix:</strong> Replace with <code>enquiry@lemonpay.tech</code> (referenced in Terms document) or create <code>contact@lemonpay.tech</code>.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR</span><span class="finding-title">Form fields have no labels — placeholder-only</span></div>
+        <div class="finding-body">All four form fields ("What should we call you?", "Mobile Number", "Email", "Company") use placeholder text as labels only. When a user types, the label disappears — this is an accessibility failure and a UX problem.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">🟡 MINOR</span><span class="finding-title">"View on Map" links not confirmed as functional</span></div>
+        <div class="finding-body">Both office addresses have "View on Map" CTAs — these need to be confirmed as working Google Maps links pointing to the correct coordinates.</div>
+      </div>
+      <div class="finding good">
+        <div class="finding-head"><span class="badge badge-green">🟢 GOOD</span><span class="finding-title">Two office addresses establish physical legitimacy</span></div>
+        <div class="finding-body">Having both a registered office (Pondicherry) and a corporate office (Tidel Park, Villupuram) listed with full addresses is a credibility signal for B2B merchants evaluating a payment provider.</div>
+      </div>
+    </div>
+
+    <div id="pg-careers" class="tab-pane">
+      <div class="row" style="margin-bottom:16px">
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">2/10</div><div class="stat-label">Content Quality</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">2/10</div><div class="stat-label">Credibility</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--red)">1/10</div><div class="stat-label">Conversion</div></div>
+        <div class="stat-box col"><div class="stat-val" style="color:var(--muted)">—</div><div class="stat-label">Accuracy</div></div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">Page has zero actual content — only a hero</span></div>
+        <div class="finding-body">The careers page has a background video (<code>/career.mp4</code>), a heading "Join the FinTech Revolution", and a button "Explore Opportunities" — but no job listings, no department sections, no application process, no culture content. The CTA links nowhere.</div>
+        <div class="finding-fix"><strong>Fix:</strong> Either remove from nav and footer entirely until content exists, or add at minimum: 3 open roles with descriptions, a culture section, and a mailto CTA.</div>
+      </div>
+    </div>
+
+    <div id="pg-broken" class="tab-pane">
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">/solutions/cube — completely blank page</span></div>
+        <div class="finding-body">Renders only nav and footer. Zero content. Main navigation item. This is the product showcase page — the most commercially critical page on the site — and it is empty.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">/ass-network — completely blank page</span></div>
+        <div class="finding-body">Renders only nav and footer. This is the associate/reseller partner programme page — a key business development channel — and it has no content whatsoever.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">/legal-policies/privacy — stuck on "Loading..."</span></div>
+        <div class="finding-body">JS-render-only content that fails. Privacy Policy being inaccessible is a potential data protection compliance issue under Indian IT Act and RBI PA Guidelines.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">/legal-policies/press — stuck on "Loading..."</span></div>
+        <div class="finding-body">Press & Noise page shows an infinite loading state. Missed opportunity for credibility-building media coverage.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL</span><span class="finding-title">/legal-policies/grievance — stuck on "Loading..."</span></div>
+        <div class="finding-body">Grievance Redressal page is inaccessible. This is a mandatory RBI PA compliance page — its absence or inaccessibility is a regulatory risk.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 4. GLOBAL PATTERNS ===== -->
+<div id="patterns" class="section">
+  <div class="section-header">
+    <h1>Global Patterns</h1>
+    <div class="tag">Site-wide issues that appear on every page</div>
+  </div>
+  <div class="section-body">
+    <div class="grid2" style="margin-bottom:20px">
+      <div class="card" style="border-color:var(--red)">
+        <h3 style="color:var(--red);margin-bottom:10px">⚠ Single Most Credibility-Damaging Item</h3>
+        <p style="font-size:13px;color:var(--text)">All three team member photos on the About page have empty src attributes — meaning no photos render. In a B2B fintech context where merchants are entrusting their payment flows to this company, invisible founders = invisible credibility. No sophisticated merchant will proceed through an evaluation where the founders cannot be seen.</p>
+      </div>
+      <div class="card" style="border-color:var(--amber)">
+        <h3 style="color:var(--amber);margin-bottom:10px">⚠ Single Most Conversion-Damaging Item</h3>
+        <p style="font-size:13px;color:var(--text)">The Solutions page (/solutions/cube) is empty. Every merchant who clicks the main "Solution" nav item to understand what they're buying sees a blank page. This is where the purchase decision happens — and it returns nothing. The conversion funnel terminates at step one.</p>
+      </div>
+    </div>
+    <h2>Site-Wide Issues</h2>
+    <div class="finding crit">
+      <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL — All Pages</span><span class="finding-title">Meta description is a developer placeholder on every single page</span></div>
+      <div class="finding-body">Every page on the site — homepage, about, contact, legal, careers — has an identical meta description: <code>"Next.js app with scroll-based sections"</code>. This is a development template placeholder that was never replaced. Google displays this in SERPs, destroying click-through rates and signalling an unprofessional, incomplete site. This also means all pages are duplicate-content risk for meta tags.</div>
+      <div class="finding-fix"><strong>Immediate fix:</strong> Each page needs a unique meta description (150–160 chars) written for that page's content and target keyword.</div>
+    </div>
+    <div class="finding crit">
+      <div class="finding-head"><span class="badge badge-red">🔴 CRITICAL — All Pages</span><span class="finding-title">Page title is "Lemonpay" identically on every page</span></div>
+      <div class="finding-body">No page has a specific title. About, Contact, Solutions, Careers — all render the same <code>&lt;title&gt;Lemonpay&lt;/title&gt;</code>. This eliminates all on-page SEO, makes browser tab management impossible, and prevents Google from understanding page context.</div>
+      <div class="finding-fix"><strong>Pattern:</strong> <code>[Page Name] | Lemonpay — [Keyword]</code> e.g. "Payment Gateway for SMEs | Lemonpay India"</div>
+    </div>
+    <div class="finding major">
+      <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR — All Pages</span><span class="finding-title">No schema markup anywhere on the site</span></div>
+      <div class="finding-body">Zero JSON-LD or microdata detected across all pages. No Organization schema, no WebSite schema, no Product/Service schema, no Person schema for founders. This means Google and AI engines have no structured way to understand the entity.</div>
+    </div>
+    <div class="finding major">
+      <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR — All Pages</span><span class="finding-title">Logo filename contains a space: "logo hd.png"</span></div>
+      <div class="finding-body">The footer logo src is <code>/logo hd.png</code> — a space in a filename is bad practice that can cause URL encoding issues, broken links in some environments, and crawlability problems.</div>
+      <div class="finding-fix"><strong>Fix:</strong> Rename to <code>/logo-hd.png</code> and update all references.</div>
+    </div>
+    <div class="finding major">
+      <div class="finding-head"><span class="badge badge-amber">🟠 MAJOR — All Pages</span><span class="finding-title">No cookie consent banner</span></div>
+      <div class="finding-body">Under DPDP Act 2023 (India's new data protection law) and general best practice for a payment aggregator, a cookie consent mechanism is expected. None is visible.</div>
+    </div>
+    <h2 style="margin-top:20px">What's Working</h2>
+    <div class="finding good">
+      <div class="finding-head"><span class="badge badge-green">🟢</span><span class="finding-title">Legal Terms document is comprehensive and RBI-compliant</span></div>
+      <div class="finding-body">The Terms & Conditions page is a thorough legal document covering PA guidelines, chargebacks, KYC, e-mandate, subscriptions, and SNRR accounts. This signals the company has engaged proper legal counsel and operates within the regulatory framework.</div>
+    </div>
+    <div class="finding good">
+      <div class="finding-head"><span class="badge badge-green">🟢</span><span class="finding-title">Dual-office physical presence builds trust</span></div>
+      <div class="finding-body">Registered office in Pondicherry + corporate office at Tidel Park (a government tech park in TN) are legitimate, verifiable addresses. This is a trust signal that should be amplified, not buried in the contact page.</div>
+    </div>
+    <div class="finding good">
+      <div class="finding-head"><span class="badge badge-green">🟢</span><span class="finding-title">Feature benefits are commercially targeted and accurate</span></div>
+      <div class="finding-body">The six homepage benefit cards map directly to real SME pain points in Indian fintech. The copy is specific and relevant — it just needs better evidence (case studies, data) behind each claim.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 5. UI/UX AUDIT ===== -->
+<div id="ux" class="section">
+  <div class="section-header">
+    <h1 style="color:var(--cyan)">UI/UX Audit</h1>
+    <div class="tag"><span class="badge badge-cyan">Design System Health: 3.9/10</span></div>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'ux','ux-system')">Design System</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-hierarchy')">Visual Hierarchy</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-responsive')">Responsiveness</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-access')">Accessibility</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-interaction')">Interaction</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-debt')">UI Debt Table</div>
+      <div class="tab" onclick="switchTab(this,'ux','ux-scores')">Design Scores</div>
+    </div>
+
+    <div id="ux-system" class="tab-pane active">
+      <h2>Design System Integrity</h2>
+      <div class="grid2">
+        <div>
+          <div class="card-sm" style="margin-bottom:12px">
+            <h3>Typography</h3>
+            <p style="font-size:12px">2–3 typefaces detected across pages (system sans-serif + apparent custom display). No consistent typographic scale — heading sizes vary section by section without apparent rhythm. The logo emoji (🍋) is being used as part of the brand identity inline in headings, which breaks semantic HTML and renders inconsistently across devices.</p>
+          </div>
+          <div class="card-sm">
+            <h3>Colour System</h3>
+            <p style="font-size:12px">Primary: yellow (#F5C842 range) as brand accent. Background: dark near-black. White text on dark. However, colour application is inconsistent — some sections use stark white sections, others dark. Partner logos section appears to switch to a lighter background, creating jarring contrast shifts. No documented design token system is in evidence.</p>
+          </div>
+        </div>
+        <div>
+          <div class="card-sm" style="margin-bottom:12px">
+            <h3>Component Consistency</h3>
+            <p style="font-size:12px">Cards in the homepage features section appear consistent. However, the team card carousel on About has visible duplication bugs. CTAs vary in style (some outlined, some filled) without apparent intent. The nav uses two different layouts (desktop + mobile clone) both rendered in DOM simultaneously, suggesting a simple show/hide approach rather than a proper responsive system.</p>
+          </div>
+          <div class="card-sm">
+            <h3>Icon & Illustration System</h3>
+            <p style="font-size:12px">Core values use custom icons (trust.png, innovation.png, partnership.png — referenced as <code>/t.png</code>, <code>/i.png</code>, <code>/p.png</code>). Single-letter filenames are fragile. The site mixes icons with photography and animated GIFs without consistent visual language. No icon library appears standardised.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ux-hierarchy" class="tab-pane">
+      <h2>Visual Hierarchy & Layout</h2>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">HOMEPAGE ABOVE FOLD</span><span class="finding-title">Fails the 5-second test</span></div>
+        <div class="finding-body">The most visually dominant element above the fold is a looping GIF of abstract geometric shapes (<code>cubic.gif</code>). No visitor can immediately determine: what Lemonpay is, who it's for, or what to do. A fintech payment gateway hero should lead with its value proposition — not abstract animation.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">SECTION FLOW</span><span class="finding-title">No logical narrative progression</span></div>
+        <div class="finding-body">Homepage sections appear in order: Hero → Stats → Features → Digital Age section → Footer. Missing: Social proof (testimonials), Product preview (what does the dashboard look like?), Pricing signal, Clear CTA section. The page has no climax point that drives conversion.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">LAYOUT</span><span class="finding-title">Footer is information-dense without hierarchy</span></div>
+        <div class="finding-body">The footer lists 10 links (legal + nav) in a single row without grouping. Combined with partner logos and copyright, it creates visual noise. Footer needs a two-column structure: Product links | Legal links, with clear separation.</div>
+      </div>
+    </div>
+
+    <div id="ux-responsive" class="tab-pane">
+      <h2>Responsiveness & Mobile</h2>
+      <div class="finding good">
+        <div class="finding-head"><span class="badge badge-green">POSITIVE</span><span class="finding-title">Responsive viewport meta tag present</span></div>
+        <div class="finding-body"><code>meta-viewport: width=device-width, initial-scale=1</code> is correctly set on all pages.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">CONCERN</span><span class="finding-title">Two full nav trees are rendered in DOM simultaneously</span></div>
+        <div class="finding-body">The crawl reveals two identical navigation structures back-to-back in the HTML (desktop + mobile). While this is a common pattern, if not managed with display:none, it can cause duplicate-content and accessibility issues with screen readers seeing two navigation landmarks.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">CONCERN</span><span class="finding-title">Video backgrounds (cubic.gif, about.mp4, career.mp4) on mobile</span></div>
+        <div class="finding-body">Autoplay videos and GIF backgrounds are performance-heavy on mobile networks. No evidence of alternative static images for mobile detected. Indian fintech customers commonly access on mid-range Android devices on 4G — heavy media degrades experience significantly.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">INFERRED</span><span class="finding-title">Logo filename with space may break on some mobile browsers</span></div>
+        <div class="finding-body"><code>/logo hd.png</code> — URL-unencoded spaces cause intermittent failures on some Android WebView versions.</div>
+      </div>
+    </div>
+
+    <div id="ux-access" class="tab-pane">
+      <h2>Accessibility</h2>
+      <div class="card-sm" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="score-big" style="color:var(--red)">3/10</div>
+          <div>
+            <div style="font-weight:700">Significant Gaps</div>
+            <div style="font-size:12px;color:var(--muted)">Multiple A11y failures across all pages</div>
+          </div>
+        </div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Contact form uses placeholder-only labels</span></div>
+        <div class="finding-body">No <code>&lt;label&gt;</code> elements detected for form inputs. Placeholder text disappears when user begins typing. Screen readers cannot associate labels with inputs. WCAG 2.1 Level A failure.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Team images have empty alt attributes</span></div>
+        <div class="finding-body">All team image references are <code>![Name]()</code> — when the image fails to load, screen readers have no alt text to announce. Alt attributes should contain the person's name and role.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">No skip-to-content link detected</span></div>
+        <div class="finding-body">Keyboard users must tab through the entire navigation on every page before reaching main content. Skip links are a basic WCAG requirement.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">MINOR</span><span class="finding-title">Single-letter filenames used as icons (/t.png, /i.png, /p.png)</span></div>
+        <div class="finding-body">Core values icons use filenames with no descriptive meaning — alt text must compensate. These need explicit alt attributes: <code>alt="Trust icon"</code>, etc.</div>
+      </div>
+    </div>
+
+    <div id="ux-interaction" class="tab-pane">
+      <h2>Interaction Design & Motion</h2>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">CONCERN</span><span class="finding-title">Heavy reliance on video backgrounds</span></div>
+        <div class="finding-body">3 pages use video backgrounds (homepage GIF, about.mp4, career.mp4). Without reduced-motion media query overrides, these play for users who prefer minimal motion (accessibility requirement: prefers-reduced-motion).</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">CONCERN</span><span class="finding-title">Scroll animations require JS — visible loading text present</span></div>
+        <div class="finding-body">About page shows "Loading scroll animations..." as actual rendered text, indicating JS-dependent animations with no graceful fallback. On slow connections, users see this loading message.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">MINOR</span><span class="finding-title">Leadership carousel bug (duplicate slide)</span></div>
+        <div class="finding-body">The infinite carousel on About page has Sathish Kumar appearing twice due to what appears to be an autoplay loop implementation bug — the last card of the original set is duplicated as the first card of the next loop.</div>
+      </div>
+    </div>
+
+    <div id="ux-debt" class="tab-pane">
+      <h2>UI Debt Inventory</h2>
+      <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Pages</th><th>Issue</th><th>Severity</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Page Title</td><td>All</td><td>Identical "Lemonpay" title on every page</td><td><span class="badge badge-red">Critical</span></td><td>Unique title per page</td></tr>
+          <tr><td>Meta Description</td><td>All</td><td>Dev placeholder text — "Next.js app with scroll-based sections"</td><td><span class="badge badge-red">Critical</span></td><td>Write unique desc per page</td></tr>
+          <tr><td>Team Photos</td><td>About</td><td>Empty src attributes — all 3 photos broken</td><td><span class="badge badge-red">Critical</span></td><td>Upload real headshots</td></tr>
+          <tr><td>Solutions Page</td><td>/solutions/cube</td><td>Completely empty page — no content</td><td><span class="badge badge-red">Critical</span></td><td>Build product page</td></tr>
+          <tr><td>Partner Logos</td><td>Home, About</td><td>TEMP CDN URLs — may expire</td><td><span class="badge badge-red">Critical</span></td><td>Download and self-host</td></tr>
+          <tr><td>Logo Filename</td><td>All</td><td>Space in filename: "logo hd.png"</td><td><span class="badge badge-amber">Major</span></td><td>Rename to logo-hd.png</td></tr>
+          <tr><td>Contact Email</td><td>Contact</td><td>Shows career@lemonpay.tech as general contact</td><td><span class="badge badge-amber">Major</span></td><td>Use enquiry@lemonpay.tech</td></tr>
+          <tr><td>Form Labels</td><td>Contact</td><td>Placeholder-only labels — no &lt;label&gt; elements</td><td><span class="badge badge-amber">Major</span></td><td>Add floating labels</td></tr>
+          <tr><td>Heading Text</td><td>Home</td><td>"Why Lemonpay Logo?" — emoji in heading breaks rendering</td><td><span class="badge badge-amber">Major</span></td><td>Remove emoji from headings</td></tr>
+          <tr><td>Nav URL</td><td>Nav</td><td>/ass-network slug is inappropriate</td><td><span class="badge badge-amber">Major</span></td><td>Use /partner-network</td></tr>
+          <tr><td>Leader Carousel</td><td>About</td><td>Sathish Kumar card duplicated (loop bug)</td><td><span class="badge badge-amber">Major</span></td><td>Fix carousel loop config</td></tr>
+          <tr><td>Legal Pages</td><td>Privacy/Grievance/Press</td><td>Infinite loading state — JS render failure</td><td><span class="badge badge-red">Critical</span></td><td>Migrate to static render</td></tr>
+          <tr><td>Skip Link</td><td>All</td><td>Missing skip-to-content for keyboard users</td><td><span class="badge badge-amber">Major</span></td><td>Add visually-hidden skip link</td></tr>
+          <tr><td>Icon Files</td><td>About</td><td>Single-char filenames: /t.png, /i.png, /p.png</td><td><span class="badge badge-muted">Minor</span></td><td>Rename descriptively</td></tr>
+          <tr><td>Careers CTA</td><td>Careers</td><td>"Explore Opportunities" goes nowhere</td><td><span class="badge badge-red">Critical</span></td><td>Add jobs or remove page</td></tr>
+          <tr><td>Motion</td><td>About</td><td>No prefers-reduced-motion implementation for videos</td><td><span class="badge badge-amber">Major</span></td><td>Add CSS media query override</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div id="ux-scores" class="tab-pane">
+      <h2>Design Quality Scores</h2>
+      <div class="grid2" style="margin-bottom:20px">
+        <div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Typography System</span><span>4/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Colour System</span><span>5/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:50%;background:var(--amber)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Layout & Visual Hierarchy</span><span>3/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Component Consistency</span><span>4/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+        </div>
+        <div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Mobile Experience</span><span>4/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Accessibility</span><span>3/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Overall Brand Alignment</span><span>4/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span style="font-weight:700">Design System Health</span><span style="color:var(--amber);font-weight:700">3.9/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:39%;background:var(--amber)"></div></div></div>
+        </div>
+      </div>
+      <div class="card" style="border-color:var(--cyan)">
+        <h3 style="color:var(--cyan);margin-bottom:10px">Verdict</h3>
+        <p>The design team behind this site appears to have been a <strong style="color:var(--text)">solo developer or small team using a drag-and-drop builder (Builder.io)</strong> without a dedicated designer. The dark colour palette and yellow accent show awareness of fintech visual conventions, but the execution lacks a systematic design language. Placeholder assets were shipped to production (TEMP CDN logos, empty photo slots, developer meta tags), indicating the site went live before it was ready. To the primary audience — SME founders evaluating payment partners — the site signals <em>early prototype</em> rather than <em>trusted payment infrastructure</em>. The gap between Lemonpay's claimed capabilities (AI-KYC, 500+ merchants, 96% satisfaction) and the site's visual maturity creates cognitive dissonance that directly reduces merchant conversion rates.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 6. SEO AUDIT ===== -->
+<div id="seo" class="section">
+  <div class="section-header">
+    <h1 style="color:var(--blue)">SEO Audit</h1>
+    <div class="tag"><span class="badge badge-red">Overall SEO: 2.1/10</span></div>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'seo','seo-tech')">Technical</div>
+      <div class="tab" onclick="switchTab(this,'seo','seo-onpage')">On-Page Table</div>
+      <div class="tab" onclick="switchTab(this,'seo','seo-kw')">Keywords</div>
+      <div class="tab" onclick="switchTab(this,'seo','seo-eeat')">Content / E-E-A-T</div>
+      <div class="tab" onclick="switchTab(this,'seo','seo-offpage')">Off-Page</div>
+    </div>
+
+    <div id="seo-tech" class="tab-pane active">
+      <h2>Technical SEO</h2>
+      <div class="grid2">
+        <div>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">No sitemap.xml</span></div>
+            <div class="finding-body">sitemap.xml returns 404. Google must crawl the entire site blind. With broken pages and empty pages, this means Googlebot is crawling and indexing empty content.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add to next.config.js or generate with next-sitemap package. Include only indexable, content-bearing pages.</div>
+          </div>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Empty pages being indexed</span></div>
+            <div class="finding-body">/solutions/cube and /ass-network have no content but are linked from main nav — Google indexes empty pages, which creates thin-content penalties.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add <code>noindex</code> meta robots to these pages until content is published. Or 301-redirect to homepage temporarily.</div>
+          </div>
+          <div class="finding crit">
+            <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">JS-render-only legal pages are uncrawlable</span></div>
+            <div class="finding-body">Privacy, Press, and Grievance pages show "Loading..." — Googlebot may not execute JavaScript completely, meaning these pages render as blank to search engines.</div>
+          </div>
+        </div>
+        <div>
+          <div class="finding major">
+            <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">Core Web Vitals risk from heavy assets</span></div>
+            <div class="finding-body">cubic.gif (animated GIF as hero background), multiple .mp4 autoplay videos, and unoptimised PNGs create high LCP (Largest Contentful Paint) risk. GIF format is significantly heavier than WebP/AVIF video alternatives.</div>
+          </div>
+          <div class="finding major">
+            <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">No canonical tags detected</span></div>
+            <div class="finding-body">No canonical tag signals detected. With duplicate meta titles and descriptions across all pages, duplicate content risk is high.</div>
+          </div>
+          <div class="finding good">
+            <div class="finding-head"><span class="badge badge-green">GOOD</span><span class="finding-title">HTTPS in use</span></div>
+            <div class="finding-body">All URLs serve over HTTPS (lemonpay.tech). Base security requirement met.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="seo-onpage" class="tab-pane">
+      <h2>On-Page SEO — Full Table</h2>
+      <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Page</th><th>Title (chars)</th><th>Meta Desc (chars)</th><th>H1</th><th>og:image</th><th>Schema</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>/</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Too short</span></td>
+            <td><code>Next.js app with scroll-based sections</code> (38) <span class="badge badge-red">Placeholder</span></td>
+            <td>None detected / "FINTECH for the future" (section label not H1)</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/about</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>"Developing FINTECH for the future." ✓</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/solutions/cube</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>None (page is empty)</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/contact</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>"Get InTouch" ✗ (not keyword-targeted)</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/ass-network</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>None (page is empty)</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/careers</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>"Join the FinTech Revolution" ✗</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+          <tr>
+            <td>/legal-policies/terms</td>
+            <td><code>Lemonpay</code> (8) <span class="badge badge-red">Duplicate</span></td>
+            <td><code>Next.js app with scroll-based sections</code> <span class="badge badge-red">Duplicate</span></td>
+            <td>"Terms and Conditions" (generic)</td>
+            <td><span class="badge badge-red">Missing</span></td>
+            <td><span class="badge badge-red">None</span></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="margin-top:14px;padding:12px 16px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;">
+        <strong style="color:var(--red)">Summary:</strong> <span style="font-size:12px;color:var(--muted)">7 of 7 pages have duplicate meta titles (8 chars each), duplicate meta descriptions (38 chars, placeholder text), and zero og:image or schema markup. This is a total on-page SEO failure. Current Google SERP appearance: site name "Lemonpay" + description "Next.js app with scroll-based sections." No page is positioned to rank for any fintech keyword.</span>
+      </div>
+    </div>
+
+    <div id="seo-kw" class="tab-pane">
+      <h2>Keyword Strategy</h2>
+      <p>The site currently has <strong style="color:var(--text)">zero keyword targeting</strong> — no page is optimised for any search term. Missed opportunities table:</p>
+      <div style="overflow-x:auto;margin-top:12px">
+      <table>
+        <thead><tr><th>Keyword</th><th>Intent</th><th>Current Page</th><th>Gap</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td>payment gateway India</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>UPI payment gateway for SME</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>payment aggregator India RBI</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>UPI payout API</td><td>Transactional</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>online KYC verification India</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>payment gateway for small business India</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-blue">HIGH</span></td></tr>
+          <tr><td>Razorpay alternative India</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-amber">MED</span></td></tr>
+          <tr><td>payment gateway Pondicherry</td><td>Local</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-amber">MED</span></td></tr>
+          <tr><td>QR code payment solution business</td><td>Commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-amber">MED</span></td></tr>
+          <tr><td>payment gateway reseller India</td><td>Commercial</td><td>/ass-network (empty)</td><td><span class="badge badge-amber">Partial</span></td><td><span class="badge badge-amber">MED</span></td></tr>
+          <tr><td>recurring payment API India</td><td>Transactional</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-muted">LOW</span></td></tr>
+          <tr><td>payment integration Tamil Nadu startup</td><td>Local commercial</td><td>None</td><td><span class="badge badge-red">Full gap</span></td><td><span class="badge badge-muted">LOW</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <div id="seo-eeat" class="tab-pane">
+      <h2>Content Quality & E-E-A-T</h2>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="stat-box"><div class="stat-val" style="color:var(--amber)">~2,500</div><div class="stat-label">Estimated words (all pages)</div></div>
+        <div class="stat-box"><div class="stat-val" style="color:var(--red)">0</div><div class="stat-label">Blog posts / content articles</div></div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">E-E-A-T FAIL</span><span class="finding-title">No demonstrable Experience, Expertise, Authoritativeness, or Trust</span></div>
+        <div class="finding-body">No named authors with credentials on any content. No case studies. No client names. No press coverage accessible. No regulatory certifications displayed (RBI PA status?). Founder photos are broken. The Terms document is the only substantive E-E-A-T signal — and it's buried in legal-policies.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">THIN CONTENT</span><span class="finding-title">5 of 10 pages have zero real content</span></div>
+        <div class="finding-body">Solutions/cube, ass-network, press, privacy, and grievance pages are either empty or fail to load. This means 50% of the site's indexed pages are empty. This creates thin-content risk across the domain.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">No blog, resource section, or knowledge hub</span></div>
+        <div class="finding-body">For a fintech company targeting merchant discovery, educational content (How to integrate UPI, Choosing a payment gateway, RBI PA compliance guide) would drive substantial organic traffic and build topical authority.</div>
+      </div>
+    </div>
+
+    <div id="seo-offpage" class="tab-pane">
+      <h2>Off-Page & Entity SEO</h2>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">OBSERVATION</span><span class="finding-title">No Google Business Profile signals detected</span></div>
+        <div class="finding-body">No LocalBusiness schema, no GMB embed, no map schema. Two physical offices are listed on the contact page but neither is reinforced with structured data. A Google Business Profile for both offices would be a quick credibility and local SEO win.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">OBSERVATION</span><span class="finding-title">Social profiles not linked from the site</span></div>
+        <div class="finding-body">No Twitter/X, LinkedIn, or Instagram links found in nav or footer. The only social link found is a single LinkedIn URL for Sathish Kumar Yadav (buried in the About page carousel). Without sameAs links, Google cannot establish the entity's social identity.</div>
+      </div>
+      <div class="finding minor">
+        <div class="finding-head"><span class="badge badge-muted">OBSERVATION</span><span class="finding-title">NAP consistency</span></div>
+        <div class="finding-body">Name: "Lemonpay" (site) vs "lemonpay Software Private Limited" (Terms) — capitalisation inconsistency. Address: correctly stated in both Contact and Terms. Phone: not listed anywhere on the public site.</div>
+      </div>
+      <div class="card-sm" style="margin-top:16px">
+        <h3>SEO Quick Wins (Under 2 Hours)</h3>
+        <div style="margin-top:8px">
+          <div style="margin-bottom:8px;padding:8px 12px;background:var(--bg4);border-radius:6px;font-size:12px"><strong style="color:var(--green)">1.</strong> Write unique title + meta description for every page (45 min). Total impact: immediate SERP click-through improvement, removes placeholder content.</div>
+          <div style="margin-bottom:8px;padding:8px 12px;background:var(--bg4);border-radius:6px;font-size:12px"><strong style="color:var(--green)">2.</strong> Add noindex to /solutions/cube and /ass-network until content exists (15 min). Prevents thin-content penalty.</div>
+          <div style="padding:8px 12px;background:var(--bg4);border-radius:6px;font-size:12px"><strong style="color:var(--green)">3.</strong> Add Organization JSON-LD schema to layout (30 min). Establishes entity identity for Google Knowledge Panel.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 7. GEO AUDIT ===== -->
+<div id="geo" class="section">
+  <div class="section-header">
+    <h1 style="color:var(--lime)">GEO Audit</h1>
+    <div class="tag"><span class="badge badge-lime">GEO Readiness: 2.6/10</span> · Generative Engine Optimisation</div>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'geo','geo-entity')">Entity Clarity</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-answer')">Answerability</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-cite')">Citation Worthiness</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-schema')">Structured Data</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-topic')">Topical Authority</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-offsite')">Off-Site Presence</div>
+      <div class="tab" onclick="switchTab(this,'geo','geo-score')">GEO Score</div>
+    </div>
+
+    <div id="geo-entity" class="tab-pane active">
+      <h2>Entity Clarity & Brand Definition</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">3/10</div><div><div style="font-weight:700">Poor Entity Definition</div><div style="font-size:12px;color:var(--muted)">AI engines cannot reliably identify or describe Lemonpay</div></div></div></div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">No Organization schema defining the entity</span></div>
+        <div class="finding-body">Without <code>Organization</code> JSON-LD with name, url, logo, description, founder, and sameAs fields, AI engines like ChatGPT Search and Google AI Overviews cannot structure their understanding of Lemonpay as a distinct entity. It will not appear in knowledge panels.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Brand name ambiguity — "lemon pay" matches unrelated entities</span></div>
+        <div class="finding-body">"Lemon pay" as a search term may surface other fintech products globally. Without a Wikipedia page, Wikidata entry, or Crunchbase listing, AI engines have no authoritative anchor to disambiguate Lemonpay (India) from other entities.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">MAJOR</span><span class="finding-title">No single clear "About" statement answerable in one sentence</span></div>
+        <div class="finding-body">AI engines need: "Lemonpay is a [category] company founded in [year] by [founders], headquartered in [location], that provides [products] to [customers]." No such statement exists on any single page in a format AI can extract cleanly.</div>
+      </div>
+    </div>
+
+    <div id="geo-answer" class="tab-pane">
+      <h2>Direct Answerability</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">3/10</div><div><div style="font-weight:700">Low Answerability</div><div style="font-size:12px;color:var(--muted)">Core questions are buried in marketing prose or unanswered</div></div></div></div>
+      <table style="margin-bottom:16px">
+        <thead><tr><th>Question</th><th>Answered?</th><th>Quality</th></tr></thead>
+        <tbody>
+          <tr><td>What is Lemonpay?</td><td><span class="badge badge-amber">Partial</span></td><td>Vague — "fintech infrastructure platform" without specifics</td></tr>
+          <tr><td>What does Lemonpay do?</td><td><span class="badge badge-amber">Partial</span></td><td>UPI, KYC, API — but buried across pages</td></tr>
+          <tr><td>Who is it for?</td><td><span class="badge badge-amber">Partial</span></td><td>Mentioned (startups, SMEs, enterprises) but not clearly defined</td></tr>
+          <tr><td>What does it cost?</td><td><span class="badge badge-red">No</span></td><td>No pricing anywhere on site</td></tr>
+          <tr><td>Where is it available?</td><td><span class="badge badge-amber">Partial</span></td><td>India inferred, not explicitly stated on homepage</td></tr>
+          <tr><td>How does it work?</td><td><span class="badge badge-red">No</span></td><td>Product page is empty</td></tr>
+          <tr><td>Is it RBI regulated?</td><td><span class="badge badge-red">No</span></td><td>Not stated anywhere on the public site (critical for fintech)</td></tr>
+          <tr><td>Who founded it?</td><td><span class="badge badge-amber">Partial</span></td><td>Names exist on About page but no photos, no year of founding</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="geo-cite" class="tab-pane">
+      <h2>Citation Worthiness</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">2/10</div><div><div style="font-weight:700">Very Low</div><div style="font-size:12px;color:var(--muted)">Nothing on this site would be cited by an AI engine as authoritative</div></div></div></div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">GAP</span><span class="finding-title">No original data, statistics, or research</span></div>
+        <div class="finding-body">AI engines cite primary data sources. The site's statistics ("500+ merchants", "96% satisfaction") are uncited self-claims. No methodology, no survey, no third-party verification. These cannot be cited by AI engines.</div>
+      </div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">GAP</span><span class="finding-title">No press mentions or third-party coverage</span></div>
+        <div class="finding-body">The Press & Noise page loads nothing. No press releases, no media mentions, no industry analyst coverage visible anywhere.</div>
+      </div>
+      <div class="finding major">
+        <div class="finding-head"><span class="badge badge-amber">GAP</span><span class="finding-title">No case studies or customer success stories</span></div>
+        <div class="finding-body">AI engines would cite: "Lemonpay helped [Merchant X] reduce transaction failures by 40%." No such content exists. No named merchants, no use cases, no outcomes.</div>
+      </div>
+    </div>
+
+    <div id="geo-schema" class="tab-pane">
+      <h2>Structured Data for AI</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">1/10</div><div><div style="font-weight:700">No Schema Whatsoever</div><div style="font-size:12px;color:var(--muted)">Zero JSON-LD detected across all 9 pages crawled</div></div></div></div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">CRITICAL</span><span class="finding-title">Zero structured data on the entire site</span></div>
+        <div class="finding-body">No Organization, no WebSite, no Service, no Person, no LocalBusiness, no FAQPage, no BreadcrumbList. This is the most actionable GEO fix available — 30 minutes of work for maximum AI visibility impact.</div>
+      </div>
+      <h3 style="margin-top:16px">Required Schema — Priority Order</h3>
+      <pre>{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Lemonpay Software Private Limited",
+  "alternateName": "Lemonpay",
+  "url": "https://lemonpay.tech",
+  "logo": "https://lemonpay.tech/logo-hd.png",
+  "description": "Lemonpay is an RBI-regulated payment aggregator offering UPI collections, payouts, QR payments, and AI-powered KYC for businesses in India.",
+  "foundingDate": "2022",
+  "founders": [
+    { "@type": "Person", "name": "Senthil Kumar Yadav", "jobTitle": "CEO & Founder" },
+    { "@type": "Person", "name": "Sathish Kumar Yadav", "jobTitle": "CBO & Co-Founder" },
+    { "@type": "Person", "name": "Sampath Kumar Yadav", "jobTitle": "CFO & Co-Founder" }
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "No. 303, 1st Floor, Kamaraj Salai",
+    "addressLocality": "Pondicherry",
+    "postalCode": "605013",
+    "addressCountry": "IN"
+  },
+  "contactPoint": { "@type": "ContactPoint", "contactType": "sales", "email": "enquiry@lemonpay.tech" },
+  "sameAs": [
+    "https://www.linkedin.com/company/lemonpay",
+    "https://twitter.com/lemonpayindia"
+  ]
+}</pre>
+    </div>
+
+    <div id="geo-topic" class="tab-pane">
+      <h2>Topical Authority</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">2/10</div><div><div style="font-weight:700">Very Low Topical Authority</div><div style="font-size:12px;color:var(--muted)">No substantive content to establish expertise</div></div></div></div>
+      <div class="finding crit">
+        <div class="finding-head"><span class="badge badge-red">GAP</span><span class="finding-title">No blog, resource hub, or educational content</span></div>
+        <div class="finding-body">For AI engines to cite Lemonpay as an authority on Indian payment gateway, UPI API integration, or KYC verification, the site needs substantive expert content on these topics. Currently zero such content exists.</div>
+        <div class="finding-fix"><strong>Priority content to create:</strong> "How UPI Payment Integration Works in India" | "RBI PA Guidelines: What Merchants Need to Know" | "KYC Verification for Indian Businesses" | "Payment Gateway vs Payment Aggregator: What's the Difference?"</div>
+      </div>
+    </div>
+
+    <div id="geo-offsite" class="tab-pane">
+      <h2>Off-Site Entity Presence</h2>
+      <div class="card-sm" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><div class="score-big" style="color:var(--red)">3/10</div><div><div style="font-weight:700">Minimal Off-Site Footprint</div><div style="font-size:12px;color:var(--muted)">Entity barely exists outside its own website</div></div></div></div>
+      <table>
+        <thead><tr><th>Platform</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Wikipedia</td><td><span class="badge badge-red">Not present</span></td><td>Create — requires notability evidence first</td></tr>
+          <tr><td>Crunchbase</td><td><span class="badge badge-amber">Unknown</span></td><td>Verify/create profile — high priority for investor discovery</td></tr>
+          <tr><td>LinkedIn Company</td><td><span class="badge badge-amber">Unknown</span></td><td>Must be created and linked from site footer</td></tr>
+          <tr><td>Google Business Profile</td><td><span class="badge badge-red">Not detected</span></td><td>Create for both offices</td></tr>
+          <tr><td>MCA21 (ROC)</td><td><span class="badge badge-green">Presumably exists</span></td><td>Ensure company details match site</td></tr>
+          <tr><td>RBI PA List</td><td><span class="badge badge-amber">Unknown</span></td><td>Confirm status and reference on site</td></tr>
+          <tr><td>G2 / Capterra</td><td><span class="badge badge-red">Not present</span></td><td>Create listings for B2B discovery</td></tr>
+          <tr><td>AngelList / Tracxn</td><td><span class="badge badge-amber">Unknown</span></td><td>Create for startup discovery</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="geo-score" class="tab-pane">
+      <h2>GEO Score Summary</h2>
+      <div class="grid2" style="margin-bottom:20px">
+        <div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Entity Clarity</span><span>3/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Direct Answerability</span><span>3/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Citation Worthiness</span><span>2/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:20%;background:var(--red)"></div></div></div>
+        </div>
+        <div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Structured Data</span><span>1/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:10%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Topical Authority</span><span>2/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:20%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span>Off-Site Presence</span><span>3/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+          <div class="score-bar-wrap"><div class="score-bar-label"><span style="font-weight:700">Overall GEO</span><span style="color:var(--red);font-weight:700">2.6/10</span></div><div class="score-bar"><div class="score-bar-fill" style="width:26%;background:var(--red)"></div></div></div>
+        </div>
+      </div>
+      <div class="card-sm">
+        <h3 style="margin-bottom:8px">GEO Quick Wins (&lt;2 hours)</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2">
+          1. Add Organization + WebSite + LocalBusiness JSON-LD to layout.tsx (30 min)<br>
+          2. Rewrite homepage intro as a direct-answer paragraph: "Lemonpay is India's payment aggregator for..." (20 min)<br>
+          3. Add FAQPage schema + visible FAQ section to homepage covering 6 key merchant questions (45 min)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 8. ROADMAP ===== -->
+<div id="roadmap" class="section">
+  <div class="section-header">
+    <h1>Improvement Roadmap</h1>
+    <div class="tag">4 phases · 24 actions · estimated 6 weeks total</div>
+  </div>
+  <div class="section-body">
+    <div class="phase-card">
+      <div class="phase-header" style="background:rgba(239,68,68,.08)">
+        <div class="phase-num" style="background:var(--red);color:#fff">1</div>
+        <div><div class="phase-title" style="color:var(--red)">Stop the Bleeding — This Week</div><div class="phase-sub">Fix before sharing the URL externally with any merchant or investor</div></div>
+      </div>
+      <div class="phase-body">
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-01</span><span class="action-title">Write unique title + meta description for all 7 pages</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+3 SEO</span></div>
+          <div class="action-body">In layout.tsx / generateMetadata(), set page-specific titles and descriptions. Remove the "Next.js app with scroll-based sections" placeholder entirely.</div>
+          <div class="action-before"><span class="before">Before: All pages titled "Lemonpay" with placeholder meta</span><br><span class="after">After: "Payment Gateway India | Lemonpay — UPI, QR & API" + unique descriptions</span></div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-02</span><span class="action-title">Upload real founder headshots to /about</span><span class="pill pill-effort">1 hour</span><span class="pill pill-impact">+3 Credibility</span></div>
+          <div class="action-body">Professional photos for all three founders. Replace empty src attributes. Update alt tags with name + role.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-03</span><span class="action-title">Add noindex to empty pages (/solutions/cube, /ass-network)</span><span class="pill pill-effort">15 min</span><span class="pill pill-impact">+2 SEO</span></div>
+          <div class="action-body">Prevents Google from indexing empty pages and creating thin-content domain penalty while content is being built.</div>
+          <pre>export const metadata = { robots: { index: false, follow: false } }</pre>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-04</span><span class="action-title">Fix Privacy, Press, Grievance pages — migrate to static render</span><span class="pill pill-effort">Half day</span><span class="pill pill-impact">+2 Legal / +2 SEO</span></div>
+          <div class="action-body">These pages use client-only JS rendering that fails. Migrate legal content to server-rendered Next.js pages. Privacy Policy being inaccessible is a regulatory risk under DPDP Act 2023 and RBI PA guidelines.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-05</span><span class="action-title">Replace Builder.io TEMP CDN partner logos</span><span class="pill pill-effort">1 hour</span><span class="pill pill-impact">+2 Credibility</span></div>
+          <div class="action-body">Download all 5 TEMP logos, rename with meaningful filenames, self-host. If any partners are fictional/stock, remove them.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-06</span><span class="action-title">Fix contact email from career@ to enquiry@</span><span class="pill pill-effort">15 min</span><span class="pill pill-impact">+2 Conversion</span></div>
+          <div class="action-body">Contact page currently shows career@lemonpay.tech as the general enquiry email.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R1-07</span><span class="action-title">Rename logo file and fix heading emoji bug</span><span class="pill pill-effort">30 min</span><span class="pill pill-impact">+1 Tech</span></div>
+          <div class="action-body">Rename <code>logo hd.png</code> → <code>logo-hd.png</code>. Remove 🍋 emoji from H1/H2 headings — it breaks semantic rendering. Use the logo image for brand visuals, not inline emoji in headings.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-header" style="background:rgba(245,158,11,.06)">
+        <div class="phase-num" style="background:var(--amber);color:#000">2</div>
+        <div><div class="phase-title" style="color:var(--amber)">Build Substance — This Month</div><div class="phase-sub">Content depth, conversion paths, structural SEO, entity setup</div></div>
+      </div>
+      <div class="phase-body">
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-01</span><span class="action-title">Build the Solutions/Cube page — the product showcase</span><span class="pill pill-effort">1 week</span><span class="pill pill-impact">+5 Conversion</span></div>
+          <div class="action-body">This is the highest commercial priority. The page needs: what Cube is, key features (dashboard, analytics, API, QR), screenshots or video walkthrough, pricing signals or "get a quote", integration steps, and a demo CTA. This is where purchase decisions happen.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-02</span><span class="action-title">Build the Partner/Associate Network page</span><span class="pill pill-effort">Half day</span><span class="pill pill-impact">+4 Conversion</span></div>
+          <div class="action-body">Rename URL to /partner-network. Add: what the programme is, commission structure (even if "contact us for rates"), how to join, who's eligible, and a signup form. This is a revenue channel being left completely empty.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-03</span><span class="action-title">Add Organization + FAQPage JSON-LD schema to layout</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+4 GEO</span></div>
+          <div class="action-body">Implement the Organization schema (see GEO section) in the root layout. Add FAQPage schema to homepage answering: What is Lemonpay? Is it RBI regulated? Which payment modes are supported? How do I integrate?</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-04</span><span class="action-title">Add form labels and accessible contact form</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+2 A11y</span></div>
+          <div class="action-body">Replace placeholder-only form fields with proper floating label pattern. Add required attribute validation. Connect form to an actual endpoint (emailjs, formspree, or backend API).</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-05</span><span class="action-title">Add "Is Lemonpay RBI regulated?" statement to homepage</span><span class="pill pill-effort">30 min</span><span class="pill pill-impact">+3 Trust / +2 GEO</span></div>
+          <div class="action-body">Merchants evaluating a payment aggregator need regulatory confirmation. If Lemonpay holds an RBI Payment Aggregator licence or is in the application process, state this clearly on the homepage and About page with a citation.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-06</span><span class="action-title">Create and link social profiles (LinkedIn, Twitter/X)</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+2 GEO</span></div>
+          <div class="action-body">Create verified company LinkedIn page. Link from footer. Add to Organization schema sameAs field. This establishes the entity for AI engines and investor discovery.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-07</span><span class="action-title">Fix Careers page — add real jobs or add interim content</span><span class="pill pill-effort">Half day</span><span class="pill pill-impact">+2 Credibility</span></div>
+          <div class="action-body">Either list real open roles with descriptions, or replace with "We're growing — send your CV to career@lemonpay.tech" with the team culture section. Current state is worse than no page.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R2-08</span><span class="action-title">Add sitemap.xml and robots.txt</span><span class="pill pill-effort">1 hour</span><span class="pill pill-impact">+2 SEO</span></div>
+          <div class="action-body">Use next-sitemap or Next.js App Router native sitemap generation. Include only indexable, content-bearing pages. Submit to Google Search Console.</div>
+          <pre>// next.config.js
+const withSitemap = require('next-sitemap');
+// app/sitemap.ts — static sitemap export</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-header" style="background:rgba(163,230,53,.06)">
+        <div class="phase-num" style="background:var(--lime);color:#000">3</div>
+        <div><div class="phase-title" style="color:var(--lime)">Technical Infrastructure — Next 4–6 Weeks</div><div class="phase-sub">Performance, design system, SEO configuration, schema deployment</div></div>
+      </div>
+      <div class="phase-body">
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-01</span><span class="action-title">Replace cubic.gif hero with optimised WebP/video</span><span class="pill pill-effort">Half day</span><span class="pill pill-impact">+2 Performance</span></div>
+          <div class="action-body">GIF is the heaviest format for animation. Convert to a short looping .mp4 or use CSS animation. Add poster frame for mobile. Implement prefers-reduced-motion override.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-02</span><span class="action-title">Establish design token system (colors, typography, spacing)</span><span class="pill pill-effort">1 day</span><span class="pill pill-impact">+3 UI/UX</span></div>
+          <div class="action-body">Define CSS custom properties for brand colors, type scale, and spacing. Audit and standardise all components against these tokens. This prevents the current visual inconsistency from recurring.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-03</span><span class="action-title">Implement canonical tags and og: meta on all pages</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+2 SEO</span></div>
+          <div class="action-body">Add <code>og:title</code>, <code>og:description</code>, <code>og:image</code>, <code>og:url</code>, and canonical links to every page via Next.js generateMetadata(). Create branded OG image template (1200x630) with Lemonpay branding.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-04</span><span class="action-title">Add cookie consent banner (DPDP Act 2023)</span><span class="pill pill-effort">Half day</span><span class="pill pill-impact">+2 Legal</span></div>
+          <div class="action-body">Implement a lightweight consent banner. Required for any analytics tracking and for compliance with India's Digital Personal Data Protection Act 2023.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-05</span><span class="action-title">Create Crunchbase + Google Business Profile listings</span><span class="pill pill-effort">2 hours</span><span class="pill pill-impact">+3 GEO</span></div>
+          <div class="action-body">Crunchbase for investor/partner discovery. GBP for both offices — adds local SEO and Google Maps presence. Ensures NAP consistency across platforms.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R3-06</span><span class="action-title">Publish first 3 SEO content pieces</span><span class="pill pill-effort">1 week</span><span class="pill pill-impact">+4 SEO / +3 GEO</span></div>
+          <div class="action-body">Priority topics: (1) "How to Integrate UPI Payments in Your Business" — target [upi payment integration] (2) "Payment Aggregator vs Payment Gateway in India" — target comparison queries (3) "RBI PA Guidelines for Merchants: 2024 Guide" — target compliance queries</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-header" style="background:rgba(77,217,192,.06)">
+        <div class="phase-num" style="background:var(--cyan);color:#000">4</div>
+        <div><div class="phase-title" style="color:var(--cyan)">Authority & Presence — This Quarter</div><div class="phase-sub">Assets that cannot be shortcut — these separate a 6/10 site from a 9/10 site</div></div>
+      </div>
+      <div class="phase-body">
+        <div class="action">
+          <div class="action-head"><span class="action-id">R4-01</span><span class="action-title">Professional photography — founders, offices, team</span><span class="pill pill-effort">1 day shoot</span><span class="pill pill-impact">+4 Credibility</span></div>
+          <div class="action-body">Real photography is the single biggest credibility upgrade available. Headshots for all founders + team, office photos, product-in-use shots. Budget ₹15,000–30,000 for a professional photographer.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R4-02</span><span class="action-title">Publish 2 merchant case studies with named clients</span><span class="pill pill-effort">1 week</span><span class="pill pill-impact">+5 GEO / +4 Credibility</span></div>
+          <div class="action-body">Format: Problem → Solution → Result with specific numbers. E.g. "How Chennai-based retailer reduced payment failures by 60% using Lemonpay." Named clients with permission = highest trust signal in B2B fintech.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R4-03</span><span class="action-title">Pursue press coverage — YourStory, Inc42, The Ken</span><span class="pill pill-effort">1 month</span><span class="pill pill-impact">+4 GEO</span></div>
+          <div class="action-body">An Inc42 or YourStory feature is worth more for AI discoverability than 50 blog posts. Pitch: funding round, merchant milestone, RBI PA licence status, or growth story.</div>
+        </div>
+        <div class="action">
+          <div class="action-head"><span class="action-id">R4-04</span><span class="action-title">Full site redesign — see Redesign Plan section</span><span class="pill pill-effort">4–6 weeks</span><span class="pill pill-impact">+5 UI/UX / +3 Conversion</span></div>
+          <div class="action-body">The current design will hold Lemonpay back from competing with Razorpay-tier positioning. A strategic redesign — planned in this document — will move the needle on all four audit dimensions simultaneously.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 9. REDESIGN PLAN ===== -->
+<div id="redesign" class="section">
+  <div class="section-header">
+    <h1>Redesign Plan</h1>
+    <div class="tag">Full redesign strategy · UI/UX, IA, SEO, System · Tool recommendations</div>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'rd','rd-vision')">Vision</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-ia')">Information Architecture</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-design')">Design Direction</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-pages')">Page Blueprints</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-seo')">SEO System</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-tools')">Tool Stack</div>
+      <div class="tab" onclick="switchTab(this,'rd','rd-prompt')">Claude Code Prompt</div>
+    </div>
+
+    <div id="rd-vision" class="tab-pane active">
+      <h2>Redesign Vision</h2>
+      <div class="card" style="border-color:var(--accent);margin-bottom:20px">
+        <h3 style="color:var(--accent);margin-bottom:10px">The North Star</h3>
+        <p style="font-size:14px;color:var(--text)">Lemonpay should feel like <strong>the Razorpay of South India</strong> — authoritative, technical but approachable, built for the scale ambition of Indian SMEs. The redesign moves the brand from "early fintech startup" to "trusted payment infrastructure" without losing the energy and accessibility that differentiates it from enterprise-only players.</p>
+      </div>
+      <div class="grid3">
+        <div class="card-sm">
+          <h3 style="color:var(--cyan)">Brand Tone Shift</h3>
+          <div style="font-size:12px;color:var(--muted)">
+            <div style="margin-bottom:6px"><span class="before" style="color:var(--red)">From:</span> Abstract, aspirational, future-generic</div>
+            <div><span style="color:var(--green)">To:</span> Concrete, specific, merchant-first. Every claim backed by evidence.</div>
+          </div>
+        </div>
+        <div class="card-sm">
+          <h3 style="color:var(--cyan)">Visual Ambition</h3>
+          <div style="font-size:12px;color:var(--muted)">
+            <div style="margin-bottom:6px"><span class="before" style="color:var(--red)">From:</span> Dark template with GIF background</div>
+            <div><span style="color:var(--green)">To:</span> Clean dark-first design system with real product UI screenshots as hero</div>
+          </div>
+        </div>
+        <div class="card-sm">
+          <h3 style="color:var(--cyan)">Conversion Architecture</h3>
+          <div style="font-size:12px;color:var(--muted)">
+            <div style="margin-bottom:6px"><span class="before" style="color:var(--red)">From:</span> No clear conversion path</div>
+            <div><span style="color:var(--green)">To:</span> Dual CTA (Merchant Sign Up + Book Demo) visible on every page</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rd-ia" class="tab-pane">
+      <h2>New Information Architecture</h2>
+      <div class="grid2">
+        <div class="card-sm">
+          <h3 style="margin-bottom:10px">Primary Navigation (New)</h3>
+          <table>
+            <tr><th>Nav Item</th><th>URL</th><th>Purpose</th></tr>
+            <tr><td>Products</td><td>/products</td><td>Dropdown: Cube, KYC Suite, API Docs</td></tr>
+            <tr><td>Solutions</td><td>/solutions</td><td>By segment: Startups, SMEs, Enterprise</td></tr>
+            <tr><td>Pricing</td><td>/pricing</td><td>Transparent fee structure</td></tr>
+            <tr><td>Company</td><td>/about</td><td>About, Team, Careers, Press</td></tr>
+            <tr><td>Resources</td><td>/blog</td><td>Blog, Docs, Case Studies</td></tr>
+          </table>
+        </div>
+        <div class="card-sm">
+          <h3 style="margin-bottom:10px">New Pages Required</h3>
+          <table>
+            <tr><th>Page</th><th>Priority</th></tr>
+            <tr><td>/products/cube — Cube Dashboard</td><td><span class="badge badge-red">P0</span></td></tr>
+            <tr><td>/partner-network — Associate Programme</td><td><span class="badge badge-red">P0</span></td></tr>
+            <tr><td>/pricing — Fee structure</td><td><span class="badge badge-red">P0</span></td></tr>
+            <tr><td>/products/kyc — KYC Suite</td><td><span class="badge badge-amber">P1</span></td></tr>
+            <tr><td>/solutions/startups</td><td><span class="badge badge-amber">P1</span></td></tr>
+            <tr><td>/solutions/enterprise</td><td><span class="badge badge-amber">P1</span></td></tr>
+            <tr><td>/blog — Content hub</td><td><span class="badge badge-amber">P1</span></td></tr>
+            <tr><td>/case-studies</td><td><span class="badge badge-muted">P2</span></td></tr>
+            <tr><td>/developers — API docs</td><td><span class="badge badge-muted">P2</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card-sm" style="margin-top:12px">
+        <h3 style="margin-bottom:10px">CTA Architecture — Dual Track</h3>
+        <div class="grid2">
+          <div>
+            <div style="font-size:12px;margin-bottom:4px;color:var(--accent);font-weight:700">Track A — Merchant Self-Serve</div>
+            <div style="font-size:12px;color:var(--muted)">Homepage → Products → Pricing → Sign Up (cube.lemonpay.in)</div>
+          </div>
+          <div>
+            <div style="font-size:12px;margin-bottom:4px;color:var(--cyan);font-weight:700">Track B — Enterprise/Demo</div>
+            <div style="font-size:12px;color:var(--muted)">Homepage → Solutions → Case Studies → Book a Demo → Contact</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rd-design" class="tab-pane">
+      <h2>Design Direction</h2>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card-sm">
+          <h3 style="color:var(--accent)">Colour System</h3>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#0D0E10;border:1px solid #2a2d35"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#0D0E10<br>Deep Ink</div></div>
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#111214"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#111214<br>Surface</div></div>
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#F5C842"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#F5C842<br>Lemon</div></div>
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#1A2035"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#1A2035<br>Navy Tint</div></div>
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#22c55e"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#22C55E<br>Success</div></div>
+            <div style="text-align:center"><div style="width:40px;height:40px;border-radius:8px;background:#E2E4EA"></div><div style="font-size:9px;color:var(--muted);margin-top:4px">#E2E4EA<br>Body</div></div>
+          </div>
+        </div>
+        <div class="card-sm">
+          <h3 style="color:var(--accent)">Typography</h3>
+          <table style="margin-top:8px">
+            <tr><td style="color:var(--muted)">Display / H1</td><td>Inter 700, 56px / Geist 800</td></tr>
+            <tr><td style="color:var(--muted)">Headings H2–H3</td><td>Inter 600, 32px / 24px</td></tr>
+            <tr><td style="color:var(--muted)">Body</td><td>Inter 400, 16px, 1.7 line-height</td></tr>
+            <tr><td style="color:var(--muted)">Code / Tech</td><td>JetBrains Mono or Fira Code</td></tr>
+            <tr><td style="color:var(--muted)">UI labels</td><td>Inter 500, 12px, tracked</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card-sm">
+        <h3 style="color:var(--cyan);margin-bottom:10px">Design Inspiration Direction</h3>
+        <p style="font-size:12px">The redesign should reference: <strong style="color:var(--text)">Stripe's clarity + Razorpay's energy + Linear's dark precision.</strong> Dark primary surfaces with lemon yellow as the singular accent. Product UI screenshots (dashboard) as the primary visual — show the actual product, not abstract shapes. Generous white space, sharp typography, trust signals (RBI badge, merchant counts, partner logos) woven throughout — not siloed in one section.</p>
+      </div>
+    </div>
+
+    <div id="rd-pages" class="tab-pane">
+      <h2>Page Blueprints</h2>
+      <div class="card-sm" style="margin-bottom:12px">
+        <h3 style="color:var(--accent)">Homepage Blueprint</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2">
+          <strong style="color:var(--text)">[1] Hero</strong> — "India's Payment Infrastructure for Growing Businesses" + Dashboard screenshot + dual CTA (Get Started Free / Book a Demo) + Trust strip (RBI logo, NPCI logo, 500+ merchants)<br>
+          <strong style="color:var(--text)">[2] Social Proof</strong> — Named merchant testimonials (3), stat counters (animated on scroll), partner logos (real)<br>
+          <strong style="color:var(--text)">[3] Products Grid</strong> — Cube Dashboard / KYC Suite / API / QR payments — each with icon + 1-line desc + link<br>
+          <strong style="color:var(--text)">[4] How It Works</strong> — 3-step: Sign up → Integrate → Get paid. Visual timeline with product UI.<br>
+          <strong style="color:var(--text)">[5] Why Lemonpay</strong> — 6 benefit cards (existing content, improved design)<br>
+          <strong style="color:var(--text)">[6] Case Study Teaser</strong> — 1 featured merchant story with logo, metric, quote<br>
+          <strong style="color:var(--text)">[7] FAQ</strong> — 6 merchant questions with FAQPage schema<br>
+          <strong style="color:var(--text)">[8] Final CTA</strong> — "Start accepting payments today" + both CTA buttons
+        </div>
+      </div>
+      <div class="card-sm" style="margin-bottom:12px">
+        <h3 style="color:var(--cyan)">Cube Product Page Blueprint</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2">
+          <strong style="color:var(--text)">[1] Hero</strong> — "Cube: Your Complete Payment Command Centre" + full dashboard screenshot<br>
+          <strong style="color:var(--text)">[2] Feature Showcase</strong> — Scrolling feature sections with side-by-side UI screenshots: Real-time analytics | UPI + QR | Payout management | Settlement tracking<br>
+          <strong style="color:var(--text)">[3] Integration</strong> — API code snippet, SDK options, integration time estimate<br>
+          <strong style="color:var(--text)">[4] Security</strong> — PCI DSS, encryption, AI fraud detection — with certification badges<br>
+          <strong style="color:var(--text)">[5] CTA</strong> — Login / Request access
+        </div>
+      </div>
+      <div class="card-sm">
+        <h3 style="color:var(--lime)">Partner Network Page Blueprint</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2">
+          <strong style="color:var(--text)">[1] Hero</strong> — "Earn by Bringing Merchants to Lemonpay" + commission headline<br>
+          <strong style="color:var(--text)">[2] Benefits</strong> — Commission structure, support, marketing materials, dedicated manager<br>
+          <strong style="color:var(--text)">[3] Who It's For</strong> — CAs, DSAs, consultants, agencies, distributors<br>
+          <strong style="color:var(--text)">[4] How to Join</strong> — 3-step process<br>
+          <strong style="color:var(--text)">[5] Sign Up Form</strong> — Name, phone, city, current business, submit
+        </div>
+      </div>
+    </div>
+
+    <div id="rd-seo" class="tab-pane">
+      <h2>SEO System for Redesign</h2>
+      <div class="card-sm" style="margin-bottom:12px">
+        <h3 style="margin-bottom:10px">Metadata Template (Next.js App Router)</h3>
+        <pre>// app/layout.tsx — root metadata
+export const metadata: Metadata = {
+  metadataBase: new URL('https://lemonpay.tech'),
+  title: { template: '%s | Lemonpay — India Payment Gateway', default: 'Lemonpay — Payment Gateway for Indian Businesses' },
+  description: 'Lemonpay is India\'s RBI-compliant payment aggregator. Accept UPI, QR, and card payments. AI-powered KYC. Built for startups, SMEs & enterprises.',
+  openGraph: { siteName: 'Lemonpay', type: 'website', locale: 'en_IN' },
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+};
+
+// Per-page example — app/products/cube/page.tsx
+export const metadata: Metadata = {
+  title: 'Cube — Payment Dashboard & Analytics',
+  description: 'Cube by Lemonpay: Real-time payment dashboard with UPI collections, payout management, and merchant analytics. Get started in minutes.',
+  alternates: { canonical: '/products/cube' },
+};</pre>
+      </div>
+      <div class="card-sm">
+        <h3 style="margin-bottom:10px">Content SEO Calendar (First Quarter)</h3>
+        <table>
+          <tr><th>Month</th><th>Article</th><th>Target Keyword</th><th>Word Count</th></tr>
+          <tr><td>Month 1</td><td>What is a Payment Aggregator in India?</td><td>payment aggregator India</td><td>2,000</td></tr>
+          <tr><td>Month 1</td><td>UPI Payment Integration Guide for Developers</td><td>UPI payment API integration</td><td>3,000</td></tr>
+          <tr><td>Month 2</td><td>RBI PA Guidelines: Merchant Compliance Checklist</td><td>RBI payment aggregator compliance</td><td>2,500</td></tr>
+          <tr><td>Month 2</td><td>Razorpay vs Cashfree vs Lemonpay: 2025 Comparison</td><td>payment gateway comparison India</td><td>2,500</td></tr>
+          <tr><td>Month 3</td><td>How to Accept UPI Payments for Small Business</td><td>accept UPI payments small business</td><td>1,500</td></tr>
+          <tr><td>Month 3</td><td>AI KYC Verification: How Lemonpay Speeds Up Onboarding</td><td>AI KYC verification India</td><td>1,800</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div id="rd-tools" class="tab-pane">
+      <h2>Recommended Tool Stack</h2>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="tool-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:32px;height:32px;background:rgba(163,230,53,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🎨</div>
+            <div>
+              <div class="tool-name" style="color:var(--lime)">Google Stitch</div>
+              <div class="tool-role">AI-powered UI prototyping & visual design</div>
+            </div>
+          </div>
+          <ul class="tool-tasks">
+            <li>Generate initial homepage layout variants from a text prompt (e.g. "dark fintech payment gateway, lemon yellow accent, Indian SME audience")</li>
+            <li>Rapidly prototype the Cube product page with hero screenshot mockup</li>
+            <li>Generate component variants (card designs, CTA styles, nav patterns)</li>
+            <li>Export as HTML/CSS for developer handoff to Claude Code</li>
+            <li>Use for Partner Network and Pricing page wireframe generation</li>
+          </ul>
+          <div style="margin-top:12px;padding:8px 10px;background:rgba(163,230,53,.08);border-radius:6px;font-size:11px;color:var(--lime)">Best for: Initial design exploration, stakeholder review mockups, rapid iteration</div>
+        </div>
+        <div class="tool-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:32px;height:32px;background:rgba(245,200,66,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⚡</div>
+            <div>
+              <div class="tool-name" style="color:var(--accent)">Claude Code</div>
+              <div class="tool-role">Next.js implementation & full build</div>
+            </div>
+          </div>
+          <ul class="tool-tasks">
+            <li>Build all new pages (Cube, Partner Network, Pricing, Blog) from Stitch designs</li>
+            <li>Implement Organization + FAQPage + Service JSON-LD schema in layout.tsx</li>
+            <li>Fix all broken pages (legal, empty pages) via SSR migration</li>
+            <li>Refactor meta/title system with generateMetadata() per page</li>
+            <li>Generate sitemap.xml, robots.txt, and og:image via next/og</li>
+            <li>Implement design token system (CSS custom properties)</li>
+          </ul>
+          <div style="margin-top:12px;padding:8px 10px;background:rgba(245,200,66,.08);border-radius:6px;font-size:11px;color:var(--accent)">Best for: All actual code. Give it the Stitch HTML + this audit prompt and let it build.</div>
+        </div>
+        <div class="tool-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:32px;height:32px;background:rgba(77,217,192,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🌐</div>
+            <div>
+              <div class="tool-name" style="color:var(--cyan)">Antigravity</div>
+              <div class="tool-role">AI web builder for rapid content pages</div>
+            </div>
+          </div>
+          <ul class="tool-tasks">
+            <li>Build SEO blog articles with proper heading structure quickly</li>
+            <li>Generate landing page variants for A/B testing (Startups vs Enterprise)</li>
+            <li>Create the Careers page with job listing templates</li>
+            <li>Build the Partner Network signup landing page as standalone if needed</li>
+            <li>Rapid Pricing page generation with feature comparison tables</li>
+          </ul>
+          <div style="margin-top:12px;padding:8px 10px;background:rgba(77,217,192,.08);border-radius:6px;font-size:11px;color:var(--cyan)">Best for: Content pages, landing variants, and pages that don't need deep Next.js integration</div>
+        </div>
+        <div class="tool-card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:32px;height:32px;background:rgba(168,85,247,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🤖</div>
+            <div>
+              <div class="tool-name" style="color:var(--purple)">Google AI Studio</div>
+              <div class="tool-role">Content generation, schema validation, GEO</div>
+            </div>
+          </div>
+          <ul class="tool-tasks">
+            <li>Generate all 12 blog articles from keyword briefs at scale (Gemini 2.5 Pro)</li>
+            <li>Create FAQ content for each page (FAQPage schema population)</li>
+            <li>Generate merchant-specific copy variants for solutions pages</li>
+            <li>Build the KYC demo walkthrough content and technical descriptions</li>
+            <li>Validate JSON-LD schema output before deploying to production</li>
+            <li>Generate structured data for case studies (ItemList + Article schema)</li>
+          </ul>
+          <div style="margin-top:12px;padding:8px 10px;background:rgba(168,85,247,.08);border-radius:6px;font-size:11px;color:var(--purple)">Best for: At-scale content generation, schema building, GEO optimization tasks</div>
+        </div>
+      </div>
+      <div class="card-sm">
+        <h3 style="margin-bottom:10px">Recommended Workflow</h3>
+        <div style="font-size:12px;color:var(--muted);line-height:2.2">
+          <strong style="color:var(--lime)">Step 1 — Stitch:</strong> Generate 3 homepage layout variants. Choose direction. Export HTML.<br>
+          <strong style="color:var(--purple)">Step 2 — AI Studio:</strong> Generate all page copy (hero text, feature descriptions, FAQ content, blog articles) using Gemini 2.5 Pro with brand context prompt.<br>
+          <strong style="color:var(--accent)">Step 3 — Claude Code:</strong> Build the full Next.js site from Stitch design + AI Studio copy. Implement schema, metadata system, sitemap, all new pages. Deploy to Vercel.<br>
+          <strong style="color:var(--cyan)">Step 4 — Antigravity:</strong> Build ancillary content pages (blog posts, solution variants) rapidly without touching the main Next.js codebase. Link to main site.
+        </div>
+      </div>
+    </div>
+
+    <div id="rd-prompt" class="tab-pane">
+      <h2>Claude Code Implementation Prompt</h2>
+      <p>Use this prompt to kick off the rebuild with Claude Code CLI:</p>
+      <pre>## LEMONPAY WEBSITE REDESIGN — CLAUDE CODE BRIEF
+
+You are rebuilding the lemonpay.tech marketing website from scratch.
+Tech stack: Next.js 15 App Router, TypeScript, Tailwind CSS v4, Framer Motion.
+Deployment: Vercel. Domain: lemonpay.tech. Dashboard: cube.lemonpay.in.
+
+## BRAND
+- Primary: #F5C842 (Lemon Yellow)
+- Background: #0D0E10 (Deep Ink)
+- Surface: #141518, #1A1C21
+- Text: #E2E4EA, muted: #7A7F8E
+- Font: Inter (body/headings), JetBrains Mono (code)
+- Tagline: "Payment Infrastructure for Growing India"
+
+## PAGES TO BUILD (Priority Order)
+1. / (Homepage) — full redesign per blueprint
+2. /products/cube — Product showcase page (CRITICAL — currently empty)
+3. /partner-network — Associate programme (rename from /ass-network)
+4. /pricing — Fee structure with comparison table
+5. /about — Fix team photos, remove duplicate card bug
+6. /contact — Fix form with floating labels + proper email
+7. /careers — Add real job listings or interim content
+8. /blog — Blog index with 3 placeholder articles
+9. /case-studies — 2 placeholder case study pages
+
+## CRITICAL FIXES REQUIRED
+- All pages: generateMetadata() with unique title + description per page
+- Remove all meta-description: "Next.js app with scroll-based sections"
+- Fix logo path: rename to /logo-hd.png everywhere
+- Migrate /legal-policies/* to SSR (currently broken JS-only render)
+- Add Organization + WebSite + FAQPage JSON-LD schema to root layout
+- Add sitemap.ts and robots.ts
+- Replace /cubic.gif with optimised video + prefers-reduced-motion fallback
+
+## SCHEMA TO IMPLEMENT IN layout.tsx
+[Organization JSON-LD as specified in GEO audit section]
+[WebSite with SearchAction]
+[LocalBusiness for both offices]
+
+## COMPONENT REQUIREMENTS
+- Global Navbar: Logo + Products/Solutions/Pricing/Company/Resources + dual CTA (Login + Get Started)
+- Footer: 4-column (Product | Company | Legal | Contact) + social links + RBI disclaimer
+- Floating CTA button that appears after 50% scroll on product pages
+- Mobile-responsive with hamburger menu
+- Cookie consent banner (lightweight, no external lib)
+
+## CONTENT NOTES
+- Display RBI payment aggregator compliance status prominently
+- All stats require source attribution or methodology note
+- Partner logos: use placeholder SVGs until real ones confirmed
+- Team section: use initials-based avatar placeholders until photos uploaded</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 10. SCORE DASHBOARD ===== -->
+<div id="scores" class="section">
+  <div class="section-header">
+    <h1>Score Dashboard</h1>
+    <div class="tag">Current state → Projected improvement across all four tracks</div>
+  </div>
+  <div class="section-body">
+    <div class="grid4" style="margin-bottom:24px">
+      <div class="stat-box"><div class="stat-val" style="color:var(--amber)">3.0</div><div class="stat-label">Overall Score</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--amber)">3.9</div><div class="stat-label">UI/UX Health</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--red)">2.1</div><div class="stat-label">SEO Score</div></div>
+      <div class="stat-box"><div class="stat-val" style="color:var(--red)">2.6</div><div class="stat-label">GEO Readiness</div></div>
+    </div>
+
+    <h2>Projected Improvement Progression</h2>
+    <div class="card" style="margin-bottom:20px">
+      <div class="prog-row">
+        <div class="prog-label" style="font-weight:700">Overall</div>
+        <div class="prog-bars">
+          <div class="prog-phase"><div class="prog-phase-label">Now</div><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:30%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">3.0</div></div>
+          <div class="prog-phase"><div class="prog-phase-label">Phase 1</div><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:50%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">5.0</div></div>
+          <div class="prog-phase"><div class="prog-phase-label">Phase 2</div><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:62%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">6.2</div></div>
+          <div class="prog-phase"><div class="prog-phase-label">Phase 3</div><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:74%;background:var(--lime)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">7.4</div></div>
+          <div class="prog-phase"><div class="prog-phase-label">Phase 4</div><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:86%;background:var(--green)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">8.6</div></div>
+        </div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-label" style="color:var(--cyan)">UI/UX</div>
+        <div class="prog-bars">
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:39%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">3.9</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:50%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">5.0</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:62%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">6.2</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:75%;background:var(--cyan)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">7.5</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:88%;background:var(--green)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">8.8</div></div>
+        </div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-label" style="color:var(--blue)">SEO</div>
+        <div class="prog-bars">
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:21%;background:var(--red)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">2.1</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:50%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">5.0</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:62%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">6.2</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:73%;background:var(--lime)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">7.3</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:82%;background:var(--green)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">8.2</div></div>
+        </div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-label" style="color:var(--lime)">GEO</div>
+        <div class="prog-bars">
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:26%;background:var(--red)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">2.6</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:45%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">4.5</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:58%;background:var(--amber)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">5.8</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:68%;background:var(--lime)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">6.8</div></div>
+          <div class="prog-phase"><div class="prog-bar-outer"><div class="prog-bar-inner" style="width:80%;background:var(--green)"></div></div><div style="font-size:10px;color:var(--muted);text-align:center;margin-top:2px">8.0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Detailed Dimension Scores</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="color:var(--cyan);margin-bottom:12px">UI/UX Breakdown</h3>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Typography System</span><span style="color:var(--amber)">4</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Colour System</span><span style="color:var(--amber)">5</span></div><div class="score-bar"><div class="score-bar-fill" style="width:50%;background:var(--amber)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Layout & Hierarchy</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Component Consistency</span><span style="color:var(--amber)">4</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Mobile Experience</span><span style="color:var(--amber)">4</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Accessibility</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Brand Alignment</span><span style="color:var(--amber)">4</span></div><div class="score-bar"><div class="score-bar-fill" style="width:40%;background:var(--amber)"></div></div></div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--blue);margin-bottom:12px">SEO Breakdown</h3>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Technical SEO</span><span style="color:var(--red)">2</span></div><div class="score-bar"><div class="score-bar-fill" style="width:20%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>On-Page SEO</span><span style="color:var(--red)">1</span></div><div class="score-bar"><div class="score-bar-fill" style="width:10%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Keyword Strategy</span><span style="color:var(--red)">1</span></div><div class="score-bar"><div class="score-bar-fill" style="width:10%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Content / E-E-A-T</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Off-Page Signals</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <h3 style="color:var(--lime);margin-top:16px;margin-bottom:12px">GEO Breakdown</h3>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Entity Clarity</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Direct Answerability</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Citation Worthiness</span><span style="color:var(--red)">2</span></div><div class="score-bar"><div class="score-bar-fill" style="width:20%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Structured Data</span><span style="color:var(--red)">1</span></div><div class="score-bar"><div class="score-bar-fill" style="width:10%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Topical Authority</span><span style="color:var(--red)">2</span></div><div class="score-bar"><div class="score-bar-fill" style="width:20%;background:var(--red)"></div></div></div>
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>Off-Site Presence</span><span style="color:var(--red)">3</span></div><div class="score-bar"><div class="score-bar-fill" style="width:30%;background:var(--red)"></div></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;border-color:var(--accent)">
+      <h3 style="color:var(--accent);margin-bottom:10px;font-family:var(--serif);font-style:italic;font-size:16px">"The opportunity here is large."</h3>
+      <p>Lemonpay has genuine commercial infrastructure — real legal compliance, verified founder identities, physical offices, a working product dashboard, and 500+ merchants. The website simply hasn't caught up. This is a site that went live too early, before assets (photos, content, schema, product pages) were ready. The gap between actual capability and online presentation is wider than usual for a 2-year-old fintech — which means the upside of closing that gap is also proportionally large.</p>
+      <p>Phase 1 alone (1 week of work) will move the overall site score from <strong style="color:var(--red)">3.0 → 5.0</strong>. The full redesign (Phases 1–4, 6–8 weeks) projects to <strong style="color:var(--green)">8.6</strong> — competitive with mid-tier Indian fintech players and within striking distance of Razorpay-tier digital presence.</p>
+      <p style="margin-bottom:0"><strong style="color:var(--accent)">For Klyph:</strong> This is a high-visibility engagement. A before/after case study with specific score progression (3.0 → 8.6) and measurable outcomes (merchant signups, search rankings, GEO citations) would be a powerful portfolio piece for the Indian fintech vertical.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function switchTab(el, group, paneId) {
+  const section = el.closest('.section-body') || el.closest('.section');
+  const tabs = el.closest('.tabs').querySelectorAll('.tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const panes = section.querySelectorAll('.tab-pane');
+  panes.forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(paneId);
+  if (target) target.classList.add('active');
+}
+</script>
+</body>
+</html>
